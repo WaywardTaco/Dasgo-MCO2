@@ -3,100 +3,125 @@
 #include <fstream>
 #include <algorithm>
 
-#include "Network.cpp"
+#include<chrono>
+#include<cstdio>
+
 #include "Reader.cpp"
 
 using namespace std;
 
 // The main driver of the program
-int main(){
+int main() {
 
     // Initialization of the reader and the selection variables
     Reader reader;
-    int selection = -1;
+    int selection = 4;
 
-    do{
-    
-    // Initialization of the network's variable
-    Network* network;
+    do {
 
-    do{
+        // Initialization of the network's variable
+        Network* network;
 
-    // Asks for a filename and reads it to generate a Network
-    string filename;
-    cout << endl << "Enter Filename: "; cin >> filename;
-    cout << endl;
-    network = reader.readFile(filename);
+        do {
 
-    // Loops if the network is non-existent
-    } while (network == NULL) ;
+            // Asks for a filename and reads it to generate a Network
+            string filename;
+            cout << endl << "Enter Filename: "; cin >> filename;
+            cout << endl;
 
-    do{
+            auto start = chrono::steady_clock::now();
 
-    // Outputs options for what to do with the network
-    cout << "Select Option:" << endl;
-    cout << "[1] Show Friend List" << endl;
-    cout << "[2] Find Connection Between" << endl;
-    cout << "[3] Load New Network" << endl;
-    cout << "[4] Exit" << endl;
-    cout << "Enter choice: "; cin >> selection;
+            network = reader.readFile(filename);
+            cout << " Total Relations Count: " << reader.relationCount << endl;
 
-    cin.clear();
-    cin.ignore();
-    
-    switch(selection){
-        case 1:{ // Shows the Friend List of the Entered Account Number
-            
-            int account;
-            cout << endl << "Enter Account ID: "; cin >> account;
+            auto end = chrono::steady_clock::now();
+            cout << "Time Elapsed for Friend List: "
+                << chrono::duration_cast<chrono::milliseconds>(end - start).count()
+                << " ms" << endl << endl;
+
+            // Loops if the network is non-existent
+        } while (network == NULL);
+
+        do {
+            if (!(selection >= 1 && selection <= 4)) cout << endl << "Invalid" << endl << endl;
+            // Outputs options for what to do with the network
+            cout << "Select Option:" << endl;
+            cout << "[1] Show Friend List" << endl;
+            cout << "[2] Find Connection Between" << endl;
+            cout << "[3] Load New Network" << endl;
+            cout << "[4] Exit" << endl;
+            cout << "Enter choice: "; cin >> selection;
 
             cin.clear();
             cin.ignore();
 
-            if(!network->hasAccount(account)){
+            switch (selection) {
+            case 1: { // Shows the Friend List of the Entered Account Number
 
-                cout << "Account " << account << " not found!" << endl << endl;
+                int account;
+                cout << endl << "Enter Account ID: "; cin >> account;
+
+                cin.clear();
+                cin.ignore();
+
+                if (!network->hasAccount(account)) {
+
+                    cout << "Account " << account << " not found!" << endl << endl;
+
+                    break;
+                }
+
+                auto start = chrono::steady_clock::now();
+
+                network->showRelations(account);
+
+                auto end = chrono::steady_clock::now();
+                cout << endl << "Time Elapsed for Friend List: "
+                    << chrono::duration_cast<chrono::milliseconds>(end - start).count()
+                    << " ms" << endl;
+
+                cout << endl;
 
                 break;
             }
+            case 2: { // Handles searching for the connection between two existent accounts as entered
 
-            network->showRelations(account);
+                int accountA, accountB;
+                cout << endl << "Enter First Account: "; cin >> accountA;
+                cout << "Enter Second Account: "; cin >> accountB;
 
-            cout << endl;
+                cin.clear();
+                cin.ignore();
 
-            break;
-        }
-        case 2:{ // Handles searching for the connection between two existent accounts as entered
-            
-            int accountA, accountB;
-            cout << endl << "Enter First Account: "; cin >> accountA;
-            cout <<         "Enter Second Account: "; cin >> accountB;
+                if (!network->hasAccount(accountA)) {
+                    cout << endl << "Could not find Account " << accountA << "!" << endl;
+                }
 
-            cin.clear();
-            cin.ignore();
+                if (!network->hasAccount(accountB)) {
+                    cout << "Could not find Account " << accountB << "!" << endl;
+                }
 
-            if(!network->hasAccount(accountA)){
-                cout << endl << "Could not find Account " << accountA << "!" << endl;
+                if (network->hasAccount(accountA) && network->hasAccount(accountB)) {
+                    auto start = chrono::steady_clock::now();
+
+                    network->searchConnection(accountA, accountB);
+
+                    auto end = chrono::steady_clock::now();
+                    cout << endl << "Time Elapsed for Accounts Connection: "
+                        << chrono::duration_cast<chrono::milliseconds>(end - start).count()
+                        << " ms" << endl;
+                }
+
+                cout << endl;
+
+                break;
+            }
             }
 
-            if(!network->hasAccount(accountB)){
-                cout << "Could not find Account " << accountB << "!" << endl;
-            }
+            // Loops back to menu so long as "Load New Network" and "Exit" are not selected
+        } while (selection < 3 || selection > 4);
 
-            if(network->hasAccount(accountA) && network->hasAccount(accountB)){
-                network->searchConnection(accountA, accountB);
-            }
-            
-            cout << endl;
-
-            break;
-        }
-    }
-
-    // Loops back to menu so long as "Load New Network" and "Exit" are not selected
-    } while (selection < 3 || selection > 4);
-
-    // Loops back when "Load New Network" is selected
+        // Loops back when "Load New Network" is selected
     } while (selection != 4);
 
     // Feedback for when "Exit is selected"
